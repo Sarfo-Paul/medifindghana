@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  role      String   @default("USER") // USER, ADMIN, PHARMACY_OWNER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  announcements Announcement[]
+
+  @@map("users")
+}
+
+model Pharmacy {
+  id           Int            @id @default(autoincrement())
+  name         String
+  address      String
+  region       String
+  city         String
+  phone        String?
+  latitude     Float?
+  longitude    Float?
+  openingHours String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  pharmacyDrugs PharmacyDrug[]
+
+  @@map("pharmacies")
+}
+
+model Drug {
+  id           Int            @id @default(autoincrement())
+  name         String
+  genericName  String?
+  category     String         // Prescription, OTC, Herbal, etc.
+  description  String?
+  dosageForm   String?        // Tablet, Capsule, Syrup, etc.
+  strength     String?        // 500mg, 10mg/ml, etc.
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  pharmacyDrugs PharmacyDrug[]
+
+  @@map("drugs")
+}
+
+model PharmacyDrug {
+  id         Int      @id @default(autoincrement())
+  pharmacyId Int
+  drugId     Int
+  price      Float?
+  quantity   Int      @default(0)
+  inStock    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  pharmacy Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  drug     Drug     @relation(fields: [drugId], references: [id], onDelete: Cascade)
+
+  @@unique([pharmacyId, drugId])
+  @@map("pharmacy_drugs")
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("announcements")
+}
